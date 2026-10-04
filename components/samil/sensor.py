@@ -10,75 +10,64 @@ CONF_SAMIL_ID = "samil_id"
 CONF_SENSOR_TYPE = "sensor_type"
 
 SENSOR_TYPES = {
-    "temperature": {
-        "name": "Samil Temp",
-        "unit": "°C",
-        "accuracy": 1,
-        "device_class": "temperature",
-        "state_class": "measurement",
-    },
-    "solar_voltage": {
-        "name": "Samil Solar Voltage",
-        "unit": "V",
-        "accuracy": 1,
-        "device_class": "voltage",
-        "state_class": "measurement",
-    },
-    "solar_current": {
-        "name": "Samil Solar Power",
-        "unit": "A",
-        "accuracy": 2,
-        "device_class": "current",
-        "state_class": "measurement",
-    },
-    "energy_today": {
-        "name": "Samil Energy Today",
-        "unit": "kWh",
-        "accuracy": 2,
-        "device_class": "energy",
-        "state_class": "total_increasing",
-    },
-    "grid_current": {
-        "name": "Samil Grid Power",
-        "unit": "A",
-        "accuracy": 2,
-        "device_class": "current",
-        "state_class": "measurement",
-    },
-    "grid_voltage": {
-        "name": "Samil Grid Voltage",
-        "unit": "V",
-        "accuracy": 1,
-        "device_class": "voltage",
-        "state_class": "measurement",
-    },
-    "grid_frequency": {
-        "name": "Samil Grid Frequency",
-        "unit": "Hz",
-        "accuracy": 2,
-        "device_class": "frequency",
-        "state_class": "measurement",
-    },
-    "solar_output": {
-        "name": "Samil Solar Output",
-        "unit": "W",
-        "accuracy": 0,
-        "device_class": "power",
-        "state_class": "measurement",
-    },
-    "online": {
-        "name": "Samil Online",
-        "unit": None,
-        "accuracy": 0,
-        "device_class": None,
-        "state_class": None,
-    },
+    "temperature": (
+        "set_samil_temp_sensor",
+        "Samil Temp",
+        "°C",
+        1,
+    ),
+    "solar_voltage": (
+        "set_samil_vpv_sensor",
+        "Samil Solar Voltage",
+        "V",
+        1,
+    ),
+    "solar_current": (
+        "set_samil_ipv_sensor",
+        "Samil Solar Power",
+        "A",
+        2,
+    ),
+    "energy_today": (
+        "set_samil_e_day_sensor",
+        "Samil Energy Today",
+        "kWh",
+        2,
+    ),
+    "grid_current": (
+        "set_samil_iac_sensor",
+        "Samil Grid Power",
+        "A",
+        2,
+    ),
+    "grid_voltage": (
+        "set_samil_vac_sensor",
+        "Samil Grid Voltage",
+        "V",
+        1,
+    ),
+    "grid_frequency": (
+        "set_samil_fac_sensor",
+        "Samil Grid Frequency",
+        "Hz",
+        2,
+    ),
+    "solar_output": (
+        "set_samil_pac_sensor",
+        "Samil Solar Output",
+        "W",
+        0,
+    ),
+    "online": (
+        "set_samil_online_sensor",
+        "Samil Online",
+        None,
+        0,
+    ),
 }
 
-CONFIG_SCHEMA = sensor.sensor_schema(
-    None,
-    entity_category=None,
-).extend(
+
+CONFIG_SCHEMA = sensor.sensor_schema().extend(
     {
         cv.GenerateID(CONF_SAMIL_ID): cv.use_id(SamilData),
         cv.Required(CONF_SENSOR_TYPE): cv.enum(
@@ -91,34 +80,10 @@ CONFIG_SCHEMA = sensor.sensor_schema(
 
 async def to_code(config):
     parent = await cg.get_variable(config[CONF_SAMIL_ID])
-
     var = await sensor.new_sensor(config)
 
-    sensor_type = config[CONF_SENSOR_TYPE]
+    setter, default_name, default_unit, default_accuracy = SENSOR_TYPES[
+        config[CONF_SENSOR_TYPE]
+    ]
 
-    if sensor_type == "temperature":
-        cg.add(parent.set_samil_temp_sensor(var))
-
-    elif sensor_type == "solar_voltage":
-        cg.add(parent.set_samil_vpv_sensor(var))
-
-    elif sensor_type == "solar_current":
-        cg.add(parent.set_samil_ipv_sensor(var))
-
-    elif sensor_type == "energy_today":
-        cg.add(parent.set_samil_e_day_sensor(var))
-
-    elif sensor_type == "grid_current":
-        cg.add(parent.set_samil_iac_sensor(var))
-
-    elif sensor_type == "grid_voltage":
-        cg.add(parent.set_samil_vac_sensor(var))
-
-    elif sensor_type == "grid_frequency":
-        cg.add(parent.set_samil_fac_sensor(var))
-
-    elif sensor_type == "solar_output":
-        cg.add(parent.set_samil_pac_sensor(var))
-
-    elif sensor_type == "online":
-        cg.add(parent.set_samil_online_sensor(var))
+    cg.add(getattr(parent, setter)(var))
