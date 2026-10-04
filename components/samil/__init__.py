@@ -15,17 +15,17 @@ SamilData = samil_ns.class_(
 
 CONF_UART_ID = "uart_id"
 
-CONFIG_SCHEMA = cv.Schema(
-    {
+CONFIG_SCHEMA = (
+    cv.Schema({
         cv.GenerateID(): cv.declare_id(SamilData),
-        cv.Required(CONF_UART_ID): cv.use_id(uart.UARTComponent),
-    }
-).extend(cv.polling_component_schema("30s"))
+    })
+    .extend(cv.polling_component_schema("30s"))
+    .extend(uart.UART_DEVICE_SCHEMA)
+)
 
 
 async def to_code(config):
     var = cg.new_Pvariable(config[cv.CONF_ID])
 
     await cg.register_component(var, config)
-
     await uart.register_uart_device(var, config)
